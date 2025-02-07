@@ -56,6 +56,8 @@ func CreateRoom(c *fiber.Ctx) error {
 		})
 	}
 
+	newRoom.Admin = user
+
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"message": "Room created successfully",
 		"room":    newRoom,

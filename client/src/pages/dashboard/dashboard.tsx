@@ -85,7 +85,7 @@ function RoomCard({ room }: { room: Room }) {
   return (
     <Link
       to={`/room/${room.ID}`}
-      className="flex flex-col gap-4 p-4 rounded-md cursor-pointer hover:border-primary/30 transition-colors duration-500 shadow-lg bg-zinc-800/10 backdrop-blur-md border border-zinc-900"
+      className="flex flex-col gap-4 p-4 rounded-md cursor-pointer hover:border-primary/30 transition-colors duration-500 shadow-lg bg-zinc-800/40 md:bg-zinc-800/10 backdrop-blur-md border border-zinc-600 md:border-zinc-900"
     >
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-medium">{room.name}</h2>

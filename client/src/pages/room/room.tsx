@@ -93,6 +93,11 @@ function RoomPage() {
 
   useWebSocketMessage("user_joined", (payload: Room) => {
     console.log("Payload", payload);
+    setTodos(
+      payload.users.flatMap((user) =>
+        user.todos.filter((todo) => todo.roomId == Number(roomId))
+      )
+    );
     setUsers(payload.users);
   });
 
@@ -134,6 +139,10 @@ function RoomPage() {
         };
 
         setTodos((prevTodos) => [...prevTodos, newTodo]);
+
+        if (newTodoInputRef && newTodoInputRef.current) {
+          newTodoInputRef.current.value = "";
+        }
 
         await api.post(`/api/room/${roomId}/todo`, {
           title: newTodoItem,
@@ -315,24 +324,27 @@ function RoomPage() {
             {roomName}
           </h2>
           {data.room.adminId == user.ID ? (
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-10 md:gap-6">
               <button
                 className="font-medium flex items-center gap-2 text-zinc-400 text-sm cursor-pointer rounded-lg hover:text-primary transition-colors"
                 onClick={() => setShowAddUserModal(true)}
               >
-                Add User <Plus className="size-4" />
+                <span className="hidden md:block">Add User</span>
+                <Plus className="size-4" />
               </button>
               <button
                 className="font-medium flex items-center gap-2 text-zinc-400 text-sm cursor-pointer rounded-lg hover:text-primary transition-colors"
                 onClick={() => setShowEditRoomModal(true)}
               >
-                Edit Room <Edit className="size-4" />
+                <span className="hidden md:block">Edit Room</span>
+                <Edit className="size-4" />
               </button>
               <button
                 className="font-medium flex items-center gap-2 text-zinc-400 text-sm cursor-pointer rounded-lg hover:text-primary transition-colors"
                 onClick={() => setShowDeleteRoomModal(true)}
               >
-                Delete Room <Trash className="size-4" />
+                <span className="hidden md:block">Delete Room</span>{" "}
+                <Trash className="size-4" />
               </button>
             </div>
           ) : (

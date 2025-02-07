@@ -10,12 +10,12 @@ export default function Landing() {
     <div className="relative min-h-screen">
       <BackgroundGradients />
 
-      <div className="relative min-h-screen text-white z-10 flex items-center justify-center">
+      <div className="relative min-h-screen px-5 text-white z-10 flex items-center justify-center">
         <div className="flex flex-col gap-4 text-center max-w-3xl">
-          <h1 className="text-5xl font-medium tracking-tight">
+          <h1 className="text-4xl md:text-5xl font-medium tracking-tight">
             Collaborate on Tasks in Real Time
           </h1>
-          <p className="text-xl text-zinc-400">
+          <p className="text-lg md:text-xl text-zinc-400">
             With realtime todos, you can create and manage your own private task
             rooms, invite friends, and stay accountable. Boost your productivity
             through collaboration.
