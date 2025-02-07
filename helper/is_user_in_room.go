@@ -1,6 +1,8 @@
 package helper
 
-import "realtime-todos/models"
+import (
+	"realtime-todos/models"
+)
 
 func IsUserInRoom(user models.User, room models.Room) bool {
 	for _, u := range room.Users {

@@ -2,4 +2,19 @@
 
 @theme {
   --font-primary: "Rubik", "sans-serif";
+  --color-primary: #aa336a;
+}
+
+body {
+  @apply bg-zinc-950 font-primary;
+}
+
+::selection {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.noscrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

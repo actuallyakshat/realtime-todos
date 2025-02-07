@@ -140,14 +140,22 @@ func (h *RoomHub) BroadcastToRoom(roomId uint, messageType string, payload inter
 	}
 }
 
-func BroadcastPlayerJoined(room models.Room) {
+func BroadcastUserJoined(room models.Room) {
 	Hub.BroadcastToRoom(room.ID, "user_joined", room)
 }
 
-func BroadcastPlayerLeft(room models.Room) {
+func BroadcastUserLeft(room models.Room) {
 	Hub.BroadcastToRoom(room.ID, "user_left", room)
 }
 
 func BroadcastTodosUpdated(room models.Room) {
 	Hub.BroadcastToRoom(room.ID, "todos_updated", room)
+}
+
+func BroadcastRoomNameUpdated(room models.Room) {
+	Hub.BroadcastToRoom(room.ID, "room_name_updated", room)
+}
+
+func BroadcastRoomDeleted(room models.Room) {
+	Hub.BroadcastToRoom(room.ID, "room_deleted", room)
 }

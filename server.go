@@ -22,6 +22,7 @@ func init() {
 
 func main() {
 	app := fiber.New()
+	setupMiddlewares(app)
 	setupRoutes(app)
 	setupWebSocketRoutes(app)
 	setupStaticFiles(app)
@@ -34,7 +35,7 @@ func setupRoutes(app *fiber.App) {
 	api.Use(middlewares.CheckAuth())
 
 	api.Use(limiter.New(limiter.Config{
-		Max:        50, // Stricter limit for API
+		Max:        50,
 		Expiration: 1 * time.Minute,
 		KeyGenerator: func(c *fiber.Ctx) string {
 			return c.IP()
@@ -49,9 +50,38 @@ func setupRoutes(app *fiber.App) {
 	routes.IndexRouter(api)
 }
 
+func setupMiddlewares(app *fiber.App) {
+	// CORS configuration with specific origins
+	app.Use(cors.New(cors.Config{
+		AllowOrigins:     "http://localhost:3000,http://localhost:5173,http://localhost:8080",
+		AllowHeaders:     "Origin, Content-Type, Accept, Authorization, Upgrade, Connection, Sec-WebSocket-Key, Sec-WebSocket-Version, Sec-WebSocket-Extensions, Sec-WebSocket-Protocol",
+		AllowMethods:     "GET, POST, PUT, DELETE, OPTIONS",
+		AllowCredentials: true,
+		MaxAge:           3600,
+		ExposeHeaders:    "Set-Cookie",
+	}))
+
+	app.Use(limiter.New(limiter.Config{
+		Max:        100,
+		Expiration: 1 * time.Minute,
+		KeyGenerator: func(c *fiber.Ctx) string {
+			return c.IP()
+		},
+		LimitReached: func(c *fiber.Ctx) error {
+			return c.Status(429).JSON(fiber.Map{
+				"error": "Too many requests, please try again later",
+			})
+		},
+	}))
+}
+
 func setupWebSocketRoutes(app *fiber.App) {
-	app.Use("/ws", cors.New())
 	app.Use("/ws", func(c *fiber.Ctx) error {
+		// Allow preflight checks
+		if c.Method() == "OPTIONS" {
+			return c.SendStatus(fiber.StatusOK)
+		}
+
 		if websocket.IsWebSocketUpgrade(c) {
 			c.Locals("allowed", true)
 			return c.Next()
@@ -60,7 +90,13 @@ func setupWebSocketRoutes(app *fiber.App) {
 	})
 
 	app.Get("/ws/:roomID", websocket.New(websockets.Hub.HandleConnection, websocket.Config{
-		Origins: []string{"http://localhost:3000", "http://localhost:5173", "https://todos.actuallyakshat.in"},
+		Origins: []string{
+			"http://localhost:3000",
+			"http://localhost:5173",
+			"http://localhost:8080",
+		},
+		EnableCompression: true,
+		HandshakeTimeout:  10 * time.Second,
 	}))
 }
 
