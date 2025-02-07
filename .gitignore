@@ -4,3 +4,5 @@
 *.exe
 
 todo.md
+
+/client_build

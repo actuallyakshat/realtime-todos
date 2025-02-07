@@ -211,7 +211,6 @@ function RoomPage() {
         // Combine reordered user todos with other users' todos
         const newTodos = [...updatedUserTodos, ...otherTodos];
 
-        // Debounce the API call
         debouncedUpdateTodoOrder(updatedUserTodos);
 
         return newTodos;
@@ -219,8 +218,6 @@ function RoomPage() {
     },
     [debouncedUpdateTodoOrder, user?.ID]
   );
-
-  // Update the debouncedUpdateTodoOrder implementation
 
   const debouncedUpdateTodoComplete = useMemo(
     () =>

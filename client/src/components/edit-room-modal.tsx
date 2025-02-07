@@ -34,7 +34,7 @@ export function EditRoomModal({
     setLoading(true);
 
     try {
-      const res = await api.patch(`/api/room/${roomId}`, { name: roomName });
+      await api.patch(`/api/room/${roomId}`, { name: roomName });
       onRoomUpdated(roomName);
       onClose();
     } catch (err) {
