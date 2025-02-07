@@ -7,6 +7,7 @@ import RedirectToLogin from "../../components/redirect-to-login";
 import useFetch from "../../hooks/use-fetch";
 import { useAuth } from "../../store/auth";
 import { Room } from "../../types/types";
+import { DashboardSkeleton } from "../../components/loading-skeletons";
 
 export default function Dashboard() {
   const { user, isLoading } = useAuth();
@@ -26,13 +27,7 @@ export default function Dashboard() {
     }
   }, [data?.rooms]);
 
-  if (loading) {
-    return (
-      <div className="h-screen w-full flex justify-center items-center">
-        Loading...
-      </div>
-    );
-  }
+  if (loading) return <DashboardSkeleton />;
 
   if (error) {
     return (

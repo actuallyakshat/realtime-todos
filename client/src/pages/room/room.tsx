@@ -41,6 +41,7 @@ import { useAuth } from "../../store/auth";
 import { useWebSocketMessage } from "../../store/websocket";
 import type { Room, Todo, User } from "../../types/types";
 import { throttle } from "lodash";
+import { RoomPageSkeleton } from "../../components/loading-skeletons";
 
 export default function RoomPageWrapper() {
   return (
@@ -307,12 +308,8 @@ function RoomPage() {
     [roomId]
   );
 
-  if (loading || isLoading)
-    return (
-      <div className="h-screen w-full flex justify-center items-center">
-        Loading...
-      </div>
-    );
+  if (loading || isLoading) return <RoomPageSkeleton />;
+
   if (error)
     return (
       <div className="h-screen w-full flex justify-center items-center">
@@ -364,7 +361,7 @@ function RoomPage() {
           ) : (
             <div>
               <button
-                className="font-medium flex items-center gap-2 text-zinc-400 text-sm cursor-pointer rounded-lg"
+                className="font-medium flex items-center gap-2 text-zinc-400 text-sm cursor-pointer rounded-lg hover:text-primary transition-colors"
                 onClick={() => handleLeaveRoom()}
               >
                 Leave Room
