@@ -40,6 +40,7 @@ import { WebSocketProvider } from "../../provider/web-socket-provider";
 import { useAuth } from "../../store/auth";
 import { useWebSocketMessage } from "../../store/websocket";
 import type { Room, Todo, User } from "../../types/types";
+import { throttle } from "lodash";
 
 export default function RoomPageWrapper() {
   return (
@@ -72,9 +73,11 @@ function RoomPage() {
 
   useEffect(() => {
     if (data?.room.users) {
-      const allTodos = data.room.users.flatMap((user) =>
-        user.todos.filter((todo) => todo.roomId === data.room.ID)
-      );
+      const allTodos = data.room.users
+        .flatMap((user) =>
+          user.todos.filter((todo) => todo.roomId === data.room.ID)
+        )
+        .sort((a, b) => a.order - b.order);
       setTodos(allTodos);
       setUsers(data.room.users);
       setRoomName(data.room.name);
@@ -84,7 +87,9 @@ function RoomPage() {
   useWebSocketMessage("todos_updated", (payload: Room) => {
     setTodos(
       payload.users.flatMap((user) =>
-        user.todos.filter((todo) => todo.roomId == Number(roomId))
+        user.todos
+          .filter((todo) => todo.roomId === Number(roomId))
+          .sort((a, b) => a.order - b.order)
       )
     );
   });
@@ -172,18 +177,32 @@ function RoomPage() {
     () =>
       debounce(async (updatedTodos: Todo[]) => {
         try {
-          const updates = updatedTodos.map((todo) => ({
+          // Create updates array with new orders
+          const updates = updatedTodos.map((todo, index) => ({
             id: todo.ID,
-            order: todo.order,
+            order: index,
           }));
 
           await api.patch(`/api/room/${roomId}/todos`, { todos: updates });
         } catch (error) {
           console.error("Failed to update todo order:", error);
-          // Optionally revert the UI state here if the API call fails
+          // Revert to previous state on error
+          setTodos((prevTodos) => {
+            const userTodos = prevTodos.filter(
+              (todo) => todo.userId === user?.ID
+            );
+            const otherTodos = prevTodos.filter(
+              (todo) => todo.userId !== user?.ID
+            );
+
+            // Sort user todos by their original order
+            const sortedUserTodos = userTodos.sort((a, b) => a.order - b.order);
+
+            return [...sortedUserTodos, ...otherTodos];
+          });
         }
       }, 500),
-    [roomId]
+    [roomId, user?.ID]
   );
 
   const handleDragEnd = useCallback(
@@ -193,35 +212,42 @@ function RoomPage() {
       if (!over || active.id === over.id) return;
 
       setTodos((items) => {
-        // Get current user's todos only
+        // Get all todos and separate them
         const userTodos = items.filter((todo) => todo.userId === user?.ID);
         const otherTodos = items.filter((todo) => todo.userId !== user?.ID);
 
-        const oldIndex = userTodos.findIndex((item) => item.ID === active.id);
-        const newIndex = userTodos.findIndex((item) => item.ID === over.id);
+        // Get the todo items being moved
+        const activeTodo = userTodos.find((todo) => todo.ID === active.id);
+        const overTodo = userTodos.find((todo) => todo.ID === over.id);
 
+        if (!activeTodo || !overTodo) return items;
+
+        // Get indices from the filtered userTodos array
+        const oldIndex = userTodos.findIndex((todo) => todo.ID === active.id);
+        const newIndex = userTodos.findIndex((todo) => todo.ID === over.id);
+
+        // Perform the array move on user's todos only
         const reorderedUserTodos = arrayMove(userTodos, oldIndex, newIndex);
 
-        // Update order values only for the current user's todos
+        // Update orders based on actual position
         const updatedUserTodos = reorderedUserTodos.map((todo, index) => ({
           ...todo,
           order: index,
         }));
 
-        // Combine reordered user todos with other users' todos
-        const newTodos = [...updatedUserTodos, ...otherTodos];
-
+        // Send update to server with the reordered todos
         debouncedUpdateTodoOrder(updatedUserTodos);
 
-        return newTodos;
+        // Return combined array maintaining order
+        return [...updatedUserTodos, ...otherTodos];
       });
     },
     [debouncedUpdateTodoOrder, user?.ID]
   );
 
-  const debouncedUpdateTodoComplete = useMemo(
+  const throttledUpdateTodoComplete = useMemo(
     () =>
-      debounce((todoId: number, isCompleted: boolean) => {
+      throttle((todoId: number, isCompleted: boolean) => {
         api.patch(`/api/room/${roomId}/todo/${todoId}`, {
           isCompleted: isCompleted,
         });
@@ -240,13 +266,13 @@ function RoomPage() {
 
         const updatedTodo = newTodos.find((t) => t.ID === todoId);
         if (updatedTodo) {
-          debouncedUpdateTodoComplete(todoId, updatedTodo.isCompleted);
+          throttledUpdateTodoComplete(todoId, updatedTodo.isCompleted);
         }
 
         return newTodos;
       });
     },
-    [debouncedUpdateTodoComplete]
+    [throttledUpdateTodoComplete]
   );
 
   const handleLeaveRoom = useCallback(() => {
@@ -429,7 +455,10 @@ function RoomPage() {
             onDragEnd={handleDragEnd}
           >
             <SortableContext
-              items={todos.filter((t) => t.userId === user.ID).map((t) => t.ID)}
+              items={todos
+                .filter((t) => t.userId === user.ID)
+                .sort((a, b) => a.order - b.order)
+                .map((t) => t.ID)}
               strategy={verticalListSortingStrategy}
             >
               {todos
