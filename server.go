@@ -53,7 +53,7 @@ func setupRoutes(app *fiber.App) {
 func setupMiddlewares(app *fiber.App) {
 	// CORS configuration with specific origins
 	app.Use(cors.New(cors.Config{
-		AllowOrigins:     "http://localhost:3000,http://localhost:5173,http://localhost:8080",
+		AllowOrigins:     "http://localhost:3000,http://localhost:5173,http://localhost:8080, https://realtime-todos-production-0222.up.railway.app, https://todos.actuallyakshat.in",
 		AllowHeaders:     "Origin, Content-Type, Accept, Authorization, Upgrade, Connection, Sec-WebSocket-Key, Sec-WebSocket-Version, Sec-WebSocket-Extensions, Sec-WebSocket-Protocol",
 		AllowMethods:     "GET, POST, PUT, DELETE, OPTIONS",
 		AllowCredentials: true,
@@ -94,6 +94,8 @@ func setupWebSocketRoutes(app *fiber.App) {
 			"http://localhost:3000",
 			"http://localhost:5173",
 			"http://localhost:8080",
+			"https://todos.actuallyakshat.in",
+			"https://realtime-todos-production-0222.up.railway.app",
 		},
 		EnableCompression: true,
 		HandshakeTimeout:  10 * time.Second,
