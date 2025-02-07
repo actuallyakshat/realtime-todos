@@ -75,7 +75,6 @@ function RoomPage() {
       const allTodos = data.room.users.flatMap((user) =>
         user.todos.filter((todo) => todo.roomId === data.room.ID)
       );
-      console.log("ALL TODOS", allTodos);
       setTodos(allTodos);
       setUsers(data.room.users);
       setRoomName(data.room.name);
@@ -83,7 +82,6 @@ function RoomPage() {
   }, [data?.room]);
 
   useWebSocketMessage("todos_updated", (payload: Room) => {
-    console.log("Payload", payload);
     setTodos(
       payload.users.flatMap((user) =>
         user.todos.filter((todo) => todo.roomId == Number(roomId))
@@ -92,7 +90,6 @@ function RoomPage() {
   });
 
   useWebSocketMessage("user_joined", (payload: Room) => {
-    console.log("Payload", payload);
     setTodos(
       payload.users.flatMap((user) =>
         user.todos.filter((todo) => todo.roomId == Number(roomId))
@@ -102,12 +99,9 @@ function RoomPage() {
   });
 
   useWebSocketMessage("user_left", (payload: Room) => {
-    console.log("Payload", payload.name);
     const isCurrentUserPresent = payload.users.find(
       (u) => u.ID === Number(user!.ID)
     );
-    console.log("IS CURRENT USER", isCurrentUserPresent);
-    console.log(payload.users);
     if (!isCurrentUserPresent) {
       navigate("/dashboard");
     }
@@ -115,12 +109,10 @@ function RoomPage() {
   });
 
   useWebSocketMessage("room_name_updated", (payload: Room) => {
-    console.log("Payload", payload);
     setRoomName(payload.name);
   });
 
-  useWebSocketMessage("room_deleted", (payload: Room) => {
-    console.log("Payload", payload);
+  useWebSocketMessage("room_deleted", () => {
     navigate("/dashboard");
   });
 
@@ -233,7 +225,6 @@ function RoomPage() {
   const debouncedUpdateTodoComplete = useMemo(
     () =>
       debounce((todoId: number, isCompleted: boolean) => {
-        console.log("Updating todo completion:", { todoId, isCompleted });
         api.patch(`/api/room/${roomId}/todo/${todoId}`, {
           isCompleted: isCompleted,
         });

@@ -162,7 +162,6 @@ export const useWebSocketMessage = <T>(
 
   useEffect(() => {
     if (!ws) {
-      console.log("[WS Hook] No WebSocket connection available");
       return;
     }
 

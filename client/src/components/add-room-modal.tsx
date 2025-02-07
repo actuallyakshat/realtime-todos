@@ -34,7 +34,6 @@ export function AddRoomModal({ onClose, onRoomCreated }: AddRoomModal) {
         return;
       }
       const response = await api.post(`/api/room`, { name });
-      console.log("NEW ROOM DATA", response.data.room);
       onRoomCreated(response.data.room);
       onClose();
     } catch (err) {

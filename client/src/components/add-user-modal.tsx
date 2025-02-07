@@ -32,7 +32,6 @@ export function AddUserModal({ roomId, onClose }: AddUserModalProps) {
         setError("Username is required.");
         return;
       }
-      console.log("USERNAME", username);
       await api.post(`/api/room/${roomId}/user`, { username });
       onClose();
     } catch (err) {

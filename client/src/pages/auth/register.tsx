@@ -44,7 +44,7 @@ export function RegisterPage() {
       setErrors({
         form: err instanceof Error ? err.message : "Registration failed",
       });
-      console.log(err);
+      console.error(err);
     } finally {
       setLoading(false);
     }
