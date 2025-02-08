@@ -18,7 +18,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import debounce from "lodash/debounce";
+import { throttle } from "lodash";
 import {
   Check,
   Edit,
@@ -33,6 +33,7 @@ import { useNavigate, useParams } from "react-router";
 import { AddUserModal } from "../../components/add-user-modal";
 import { DeleteRoomModal } from "../../components/delete-room-modal";
 import { EditRoomModal } from "../../components/edit-room-modal";
+import { RoomPageSkeleton } from "../../components/loading-skeletons";
 import RedirectToLogin from "../../components/redirect-to-login";
 import useFetch from "../../hooks/use-fetch";
 import api from "../../lib/axios";
@@ -40,8 +41,6 @@ import { WebSocketProvider } from "../../provider/web-socket-provider";
 import { useAuth } from "../../store/auth";
 import { useWebSocketMessage } from "../../store/websocket";
 import type { Room, Todo, User } from "../../types/types";
-import { throttle } from "lodash";
-import { RoomPageSkeleton } from "../../components/loading-skeletons";
 
 export default function RoomPageWrapper() {
   return (
@@ -70,6 +69,8 @@ function RoomPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [roomName, setRoomName] = useState(data?.room.name);
 
+  const pendingUpdatesRef = useRef<number>(0);
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -86,13 +87,15 @@ function RoomPage() {
   }, [data?.room]);
 
   useWebSocketMessage("todos_updated", (payload: Room) => {
-    setTodos(
-      payload.users.flatMap((user) =>
-        user.todos
-          .filter((todo) => todo.roomId === Number(roomId))
-          .sort((a, b) => a.order - b.order)
-      )
-    );
+    if (pendingUpdatesRef.current === 0) {
+      setTodos(
+        payload.users.flatMap((user) =>
+          user.todos
+            .filter((todo) => todo.roomId === Number(roomId))
+            .sort((a, b) => a.order - b.order)
+        )
+      );
+    }
   });
 
   useWebSocketMessage("user_joined", (payload: Room) => {
@@ -174,20 +177,20 @@ function RoomPage() {
     })
   );
 
-  const debouncedUpdateTodoOrder = useMemo(
+  const throttledUpdateTodoOrder = useMemo(
     () =>
-      debounce(async (updatedTodos: Todo[]) => {
+      throttle(async (updatedTodos: Todo[]) => {
         try {
-          // Create updates array with new orders
+          pendingUpdatesRef.current++;
           const updates = updatedTodos.map((todo, index) => ({
             id: todo.ID,
             order: index,
           }));
 
           await api.patch(`/api/room/${roomId}/todos`, { todos: updates });
+          pendingUpdatesRef.current--;
         } catch (error) {
           console.error("Failed to update todo order:", error);
-          // Revert to previous state on error
           setTodos((prevTodos) => {
             const userTodos = prevTodos.filter(
               (todo) => todo.userId === user?.ID
@@ -195,10 +198,7 @@ function RoomPage() {
             const otherTodos = prevTodos.filter(
               (todo) => todo.userId !== user?.ID
             );
-
-            // Sort user todos by their original order
             const sortedUserTodos = userTodos.sort((a, b) => a.order - b.order);
-
             return [...sortedUserTodos, ...otherTodos];
           });
         }
@@ -237,13 +237,13 @@ function RoomPage() {
         }));
 
         // Send update to server with the reordered todos
-        debouncedUpdateTodoOrder(updatedUserTodos);
+        throttledUpdateTodoOrder(updatedUserTodos);
 
         // Return combined array maintaining order
         return [...updatedUserTodos, ...otherTodos];
       });
     },
-    [debouncedUpdateTodoOrder, user?.ID]
+    [throttledUpdateTodoOrder, user?.ID]
   );
 
   const throttledUpdateTodoComplete = useMemo(

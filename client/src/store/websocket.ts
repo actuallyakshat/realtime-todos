@@ -113,14 +113,14 @@ export const wsManagerAtom = atom(
         );
       };
 
-      ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          console.log(`[WS Message] Received in room ${roomId}:`, data);
-        } catch (error) {
-          console.error("[WS Message] Error parsing message:", error);
-        }
-      };
+      // ws.onmessage = (event) => {
+      //   try {
+      //     const data = JSON.parse(event.data);
+      //     console.log(`[WS Message] Received in room ${roomId}:`, data);
+      //   } catch (error) {
+      //     console.error("[WS Message] Error parsing message:", error);
+      //   }
+      // };
 
       set(wsConnectionAtom, ws);
       return ws;
