@@ -249,9 +249,17 @@ function RoomPage() {
   const throttledUpdateTodoComplete = useMemo(
     () =>
       throttle((todoId: number, isCompleted: boolean) => {
-        api.patch(`/api/room/${roomId}/todo/${todoId}`, {
-          isCompleted: isCompleted,
-        });
+        pendingUpdatesRef.current += 1;
+        api
+          .patch(`/api/room/${roomId}/todo/${todoId}`, {
+            isCompleted: isCompleted,
+          })
+          .catch((error) => {
+            console.error("Failed to update todo:", error);
+          })
+          .finally(() => {
+            pendingUpdatesRef.current -= 1;
+          });
       }, 500),
     [roomId]
   );
@@ -522,7 +530,7 @@ function SortableTodoCard({
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
-    touchAction: "none", // Important for touch devices
+    touchAction: "none",
   };
 
   const handleDelete = async () => {
