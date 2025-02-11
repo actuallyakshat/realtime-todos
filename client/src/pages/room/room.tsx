@@ -68,6 +68,7 @@ function RoomPage() {
   const [showDeleteRoomModal, setShowDeleteRoomModal] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
   const [roomName, setRoomName] = useState(data?.room.name);
+  const [progress, setProgress] = useState(0);
 
   const pendingUpdatesRef = useRef<number>(0);
 
@@ -85,6 +86,18 @@ function RoomPage() {
       setRoomName(data.room.name);
     }
   }, [data?.room]);
+
+  useEffect(() => {
+    if (todos.length > 0) {
+      const completedTodosLength = todos.filter(
+        (todo) => todo.isCompleted === true
+      ).length;
+      const userTodosLength = todos.filter(
+        (todo) => todo.userId === user?.ID
+      ).length;
+      setProgress(Math.round((completedTodosLength / userTodosLength) * 100));
+    }
+  }, [todos, user]);
 
   useWebSocketMessage("todos_updated", (payload: Room) => {
     if (pendingUpdatesRef.current === 0) {
@@ -431,6 +444,23 @@ function RoomPage() {
         </div>
       </div>
       <div className="flex-1 xl:flex-[2] h-full border rounded-lg border-zinc-800 overflow-y-auto p-3 noscrollbar">
+        <div className="w-full h-4 rounded-full overflow-hidden bg-white text-black flex items-center justify-center mb-5 relative">
+          <div
+            className="h-full rounded-full flex items-center justify-center w-full bg-primary transition-all duration-500 ease-in-out absolute z-[10] top-0 left-0"
+            style={{
+              width: `${isNaN(progress) ? 0 : progress}%`,
+            }}
+          ></div>
+          <p
+            className="text-xs text-center whitespace-nowrap font-medium relative z-[11] transition-colors duration-500"
+            style={{
+              color: `${!isNaN(progress) && progress > 50 ? "#fff" : "#000"}`,
+            }}
+          >
+            {isNaN(progress) ? 0 : progress}% Complete
+          </p>
+        </div>
+
         <form
           className="flex items-center gap-1"
           onSubmit={(e) => {
