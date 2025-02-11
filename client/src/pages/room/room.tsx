@@ -89,13 +89,11 @@ function RoomPage() {
 
   useEffect(() => {
     if (todos.length > 0) {
-      const completedTodosLength = todos.filter(
-        (todo) => todo.isCompleted === true
-      ).length;
-      const userTodosLength = todos.filter(
-        (todo) => todo.userId === user?.ID
-      ).length;
-      setProgress(Math.round((completedTodosLength / userTodosLength) * 100));
+      const userTodos = todos.filter((todo) => todo.userId === user?.ID);
+
+      const completedTodos = userTodos.filter((todo) => todo.isCompleted);
+
+      setProgress(Math.round((completedTodos.length / userTodos.length) * 100));
     }
   }, [todos, user]);
 
